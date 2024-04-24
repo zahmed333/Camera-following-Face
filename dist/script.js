@@ -161,7 +161,7 @@ function init() {
   watcher = new Watcher(camera, checkReady);
 	scene.add(watcher.el);
   
-	var light = new THREE.SpotLight(0xffffff);
+	var light = new THREE.SpotLight(0xffffff, 1.2, 0, Math.PI / 4, 1);  // Slightly increased intensity
 	var vec3 = Utils.unproject2DCoords(window.innerWidth / 3, window.innerHeight / 3, camera, 5);
 	light.position.set(vec3.x + 10, vec3.y + 20, 25);
 	light.castShadow = true;
@@ -169,17 +169,23 @@ function init() {
 	light.shadow.mapSize.height = 4096;
 	light.shadow.camera.near = 1;
 	light.shadow.camera.far = 200;
-	light.shadow.camera.fov = 45;
+	light.shadow.camera.fov = 30; // Narrower field of view for more focused light
 	scene.add(light);
 	
-	var light2 = new THREE.AmbientLight(0xffffff, 0.3);
+	var light2 = new THREE.AmbientLight(0xffffff, 0.2); // Increased intensity to lighten the scene
 	scene.add(light2);
 	
 	var planeG = new THREE.PlaneGeometry(500, 500, 50);
-	var planeMat = new THREE.MeshPhongMaterial({color: 0xffde00, side: THREE.DoubleSide});
+	var planeMat = new THREE.MeshPhongMaterial({
+	  color: 0x000080,
+	  side: THREE.DoubleSide,
+	  specular: 0x999999, // More reflective
+	  shininess: 10      // Increased shininess
+	});
 	plane = new THREE.Mesh(planeG, planeMat);
 	plane.receiveShadow = true;
 	scene.add(plane);
+	
 
 	fly = new Fly(camera, checkReady);
 	scene.add(fly.el);
