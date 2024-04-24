@@ -140,7 +140,27 @@ var wW,
 		fly,
     numObjectsLoaded = 0;
 		
+	function setupCamera() {
+		const video = document.createElement('video');
+		video.id = 'video';
+		video.width = 720;
+		video.height = 560;
+		video.autoplay = true;
+		video.muted = true;
+		document.body.appendChild(video);
+	  
+		navigator.mediaDevices.getUserMedia({ video: true })
+		  .then(function(stream) {
+			video.srcObject = stream;
+		  })
+		  .catch(function(error) {
+			console.error("Cannot access the camera", error);
+		  });
+	  }
+	
 function init() {
+	setupCamera(); // Initialize the camera first
+
 	canvas3d = document.getElementById('canvas3d');
 	setSize();
   $('#intro').css('opacity', '1');
