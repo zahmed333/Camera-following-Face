@@ -1,3 +1,5 @@
+var scaleFactor = 0.01; // Adjust this value based on your scene setup
+
 (function(window) {
 	
 	function Fly(camera, onReady) {
@@ -143,21 +145,110 @@ var wW,
 	function setupCamera() {
 		const video = document.createElement('video');
 		video.id = 'video';
-		video.width = 720;
-		video.height = 560;
 		video.autoplay = true;
 		video.muted = true;
 		document.body.appendChild(video);
-	  
-		navigator.mediaDevices.getUserMedia({ video: true })
-		  .then(function(stream) {
-			video.srcObject = stream;
-		  })
-		  .catch(function(error) {
-			console.error("Cannot access the camera", error);
-		  });
-	  }
 	
+		function resizeVideo() {
+			const aspectRatio = 16 / 9; // Set this to the aspect ratio of your camera feed
+			const height = window.innerHeight;
+			const width = height * aspectRatio;
+			video.width = width;
+			video.height = height;
+		}
+	
+		resizeVideo(); // Initial resize
+		window.addEventListener('resize', resizeVideo); // Adjust video size on window resize
+	
+		navigator.mediaDevices.getUserMedia({ video: true })
+			.then(function(stream) {
+				video.srcObject = stream;
+				video.onplay = () => {
+					console.log('Video is playing, starting face detection.');
+					initializeFaceDetection(video);
+				};
+			})
+			.catch(function(error) {
+				console.error("Cannot access the camera", error);
+			});
+	}	
+	
+
+	  function initializeFaceDetection(video) {
+		const faceDetector = ml5.faceApi(video, {
+			withLandmarks: true,
+			withExpressions: false,
+			withDescriptors: false
+		}, modelReady);
+		
+		function modelReady() {
+			console.log('Model ready!');
+			faceDetector.detect(gotResults);
+		}
+		function gotResults(err, results) {
+			if (err) {
+				console.error(err);
+				return;
+			}
+			if (results) {
+				results.forEach(result => {
+					const { _x, _y, _width, _height } = result.alignedRect._box;
+		
+					// Flip the X coordinate if the video feed is mirrored.
+					const flippedX = video.offsetWidth - (_x + _width); 
+		
+					moveFlyToFace(flippedX, _y, _width, _height);
+				});
+				faceDetector.detect(gotResults);
+			}
+		}
+		
+				
+		
+	}
+
+	let detectionMesh = null; // This will store our detection mesh
+
+	function updateThreeJSDetection(x, y, width, height) {
+		if (!detectionMesh) {
+			let geometry = new THREE.BoxGeometry(1, 1, 0.1); // Default size, we'll scale it later
+			let material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+			detectionMesh = new THREE.Mesh(geometry, material);
+			scene.add(detectionMesh);
+		}
+		
+		detectionMesh.scale.set(width * scaleFactor, height * scaleFactor, 1);
+		detectionMesh.position.set((x + width / 2) * scaleFactor, -(y + height / 2) * scaleFactor, 0);
+	}
+	
+
+	function interactWithFace(x, y, width, height) {
+		let targetPosition = new THREE.Vector3((x + width / 2) * scaleFactor, -(y + height / 2) * scaleFactor, 0);
+		let object = scene.getObjectByName("interactiveObject");
+		if (object) {
+			TweenMax.to(object.position, 1, { x: targetPosition.x, y: targetPosition.y, ease: Expo.easeOut });
+		}
+	}
+	
+	function moveFlyToFace(detectedX, detectedY, detectedWidth, detectedHeight) {
+		// Assuming the face detection gives us coordinates in the video element space, 
+		// we need to convert these to window-relative coordinates if necessary.
+		// This code assumes the video element is full-window. Adjust if not.
+		const rect = video.getBoundingClientRect(); // 'video' is your video element
+		const scaleX = window.innerWidth / rect.width;
+		const scaleY = window.innerHeight / rect.height;
+		
+		// Scale the detected coordinates to match the full window size
+		const screenX = detectedX * scaleX + rect.left;
+		const screenY = detectedY * scaleY + rect.top;
+	
+		// Use the mouse movement approach with the converted coordinates
+		var vec3 = Utils.unproject2DCoords(screenX, screenY, camera, fly.el.position.z);
+		TweenLite.to(fly.el.position, 0.3, { x: vec3.x, y: vec3.y, ease: Linear.easeNone });
+	}
+	
+	
+
 function init() {
 	setupCamera(); // Initialize the camera first
 
