@@ -197,7 +197,7 @@ var wW,
 					// Flip the X coordinate if the video feed is mirrored.
 					const flippedX = video.offsetWidth - (_x + _width); 
 		
-					moveFlyToFace(flippedX, _y, _width, _height);
+					moveFlyAndWatcherToFace(flippedX, _y, _width, _height);
 				});
 				faceDetector.detect(gotResults);
 			}
@@ -230,7 +230,7 @@ var wW,
 		}
 	}
 	
-	function moveFlyToFace(detectedX, detectedY, detectedWidth, detectedHeight) {
+	function moveFlyAndWatcherToFace(detectedX, detectedY, detectedWidth, detectedHeight) {
 		// Assuming the face detection gives us coordinates in the video element space, 
 		// we need to convert these to window-relative coordinates if necessary.
 		// This code assumes the video element is full-window. Adjust if not.
@@ -242,9 +242,13 @@ var wW,
 		const screenX = detectedX * scaleX + rect.left;
 		const screenY = detectedY * scaleY + rect.top;
 	
-		// Use the mouse movement approach with the converted coordinates
-		var vec3 = Utils.unproject2DCoords(screenX, screenY, camera, fly.el.position.z);
-		TweenLite.to(fly.el.position, 0.3, { x: vec3.x, y: vec3.y, ease: Linear.easeNone });
+		// Use the mouse movement approach with the converted coordinates for the fly
+		var vec3Fly = Utils.unproject2DCoords(screenX, screenY, camera, fly.el.position.z);
+		TweenLite.to(fly.el.position, 0.3, { x: vec3Fly.x, y: vec3Fly.y, ease: Linear.easeNone });
+	
+		// Rotate the watcher to face the detected face
+		var vec3Watcher = Utils.unproject2DCoords(screenX, screenY, camera, 10).sub(new THREE.Vector3(watcher.el.position.x - 2, watcher.el.position.y + 2, 0));
+		TweenMax.rotateTo(watcher.body, 0.1, {vector: vec3Watcher, ease: Linear.easeNone, delay: 0.2});
 	}
 	
 	
@@ -328,8 +332,8 @@ function checkReady() {
 }
 
 function render() {
-	requestAnimationFrame(render);
-	renderer.render(scene, camera);
+    requestAnimationFrame(render);
+    renderer.render(scene, camera);
 }
 
 $(document).ready(init);
