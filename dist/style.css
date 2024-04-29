@@ -1,25 +1,172 @@
 html, body {
-	margin: 0;
-	padding: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: rgb(31, 31, 31);
+    height: 100vh;
+    box-shadow: 0px 0px 122px 25px black inset;
+    background-repeat: repeat;
+    animation: noise 230ms steps(6) infinite;
+}
+
+@keyframes noise {
+    0% { background-position-y: 0px; }
+    100% { background-position-y: -420px; }
 }
 
 #wrapper {
-	position: absolute;
-	width: 100%;
-	height: 100%;
-	overflow: hidden;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
 }
 
 canvas {
-	position: absolute;
-	top: 0;
-	left: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
 }
 
+.trail {
+	font-size: 18px;
+	pointer-events: none;
+	transition: opacity 1s;
+	position: absolute;
+	transform: translate(-50%, -50%);
+	animation: trail-color 1s infinite;
+  }
+  
+  @keyframes trail-color {
+	0%, 100% {
+	  color: red;
+	}
+	33% {
+	  color: green;
+	}
+	66% {
+	  color: blue;
+	}
+  }
+
+.glitch {
+    display: inline-block;
+    animation: glitch 0.2s infinite;
+}
+
+@keyframes glitch {
+	3% {
+	  text-shadow: 14px 14px 0px red;
+	}
+	6% {
+	  text-shadow: -18px 8px 0px blue;
+	  transform: translate(8px, -20px) skewX(6480deg);
+	}
+	7% {
+	  text-shadow: 6px -8px 0px green;
+	}
+	9% {
+	  text-shadow: 0px 0px 6px white;
+	  transform: translate(0px, 0px) skewX(0deg);
+	}
+	2%, 54% {
+	  transform: translateX(0px) skew(0deg);
+	}
+	55% {
+	  transform: translate(-4px, 12px) skew(-11060deg);
+	}
+	56% {
+	  text-shadow: 0px 0px 6px white;
+	  transform: translate(0px, 0px) skew(0deg);
+	}
+	57% {
+	  text-shadow: 14px 14px 0px red;
+	  transform: translate(8px, -20px) skew(-140deg);
+	}
+	58% {
+	  text-shadow: 0px 0px 6px white;
+	  transform: translate(0px, 0px) skew(0deg);
+	}
+	62% {
+	  text-shadow: 6px -8px 0px green;
+	  transform: translate(0px, 40px) skew(0deg);
+	}
+	63% {
+	  text-shadow: 0px 0px 6px white;
+	  transform: translate(8px, -4px) skew(0deg);
+	}
+	64% {
+	  transform: translate(2px, 6px) skew(-460deg);
+	}
+	65% {
+	  transform: translate(-14px, 4px) skew(240deg);
+	}
+	66% {
+	  transform: translate(0px, 0px) skew(0deg);
+	}
+  }
+}
+
+.glitch-wrapper {
+    padding-top: 180px;
+    width: 100vw;
+    text-align: center;
+    animation: glitch 2s linear infinite;
+    margin-bottom: 110px;
+}
+
+.glitch-text, button {
+    font-family: monospace;
+    font-weight: bold;
+}
+
+.glitch-text::before {
+    content: 'ERROR 404';
+    color: black;
+    text-shadow: 0px 0px 5px 10px black !important;
+    -webkit-filter: blur(7px);
+    -moz-filter: blur(7px);
+    -o-filter: blur(7px);
+    -ms-filter: blur(7px);
+    filter: blur(7px);
+    display: block;
+    position: absolute;
+    z-index: -1;
+    font-size: 132px;
+    left: 0px;
+    right: 0px;
+    margin-top: -30px;
+    opacity: .5;
+}
+
+.glitch-text {
+    position: relative;
+    z-index: 2;
+    opacity: .9;
+    margin: 0 auto;
+    text-shadow: 0px 0px 3px white;
+    animation: glitch-color 3s infinite;
+    cursor: pointer;
+    font-size: 52px;
+    color: white;
+}
+
+@keyframes glitch-color {
+    0% { color: white; }
+    10% { color: #ff00ff; }
+    20% { color: #00ffff; }
+    30% { color: #00ff00; }
+    40% { color: #ffff00; }
+    50% { color: #ff0000; }
+    60% { color: #ff00ff; }
+    70% { color: #00ffff; }
+    80% { color: #00ff00; }
+    90% { color: #ffff00; }
+    100% { color: #ff0000; }
+}
 
 #bg {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background-color: #f;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
 }

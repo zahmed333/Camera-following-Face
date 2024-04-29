@@ -7,6 +7,10 @@ var scaleFactor = 0.01; // Adjust this value based on your scene setup
 		this.mouseX = 0;
 		this.mouseY = 0;
 		this.camera = camera;
+		this.trail = [];
+		this.trailLength = 10; // Adjust the trail length as needed
+		this.trailOpacity = 1;
+		this.trailFadeSpeed = 0.03; // Adjust the fade speed as needed
     
 		this.el = new THREE.Group();
 		this.el.position.z = 10;
@@ -40,7 +44,61 @@ var scaleFactor = 0.01; // Adjust this value based on your scene setup
 		this.mouseY = e.clientY;
 		this.moveTo(this.mouseX, this.mouseY);
 	}
+	Fly.prototype.updateTrail = function() {
+		if (!this.lastTrailUpdate || Date.now() - this.lastTrailUpdate > 500) {
+			// Convert the fly's 3D position to 2D screen coordinates
+			var screenPosition = this.el.position.clone().project(camera);
+			var screenX = (screenPosition.x + 1) / 2 * window.innerWidth;
+			var screenY = -(screenPosition.y - 1) / 2 * window.innerHeight;
 	
+			// Check if the fly has moved since the last trail update
+			if (!this.lastScreenPosition || screenX !== this.lastScreenPosition.x || screenY !== this.lastScreenPosition.y) {
+				// Generate random data
+				const randomData = Math.random();
+				let data = "";
+				if (randomData < 0.33) {
+					const ssn = Math.floor(Math.random() * 1000000000).toString().padStart(9, "0");
+					data = "SSN: " + ssn.replace(/(\d{3})(\d{2})(\d{4})/, "$1-$2-$3");
+				} else if (randomData < 0.66) {
+					const gateId = Math.floor(Math.random() * 1000000000).toString().padStart(9, "0");
+					data = "Gate ID: " + gateId.replace(/(\d{3})(\d{3})(\d{3})/, "$1-$2-$3");
+				} else {
+					data = "Data Worth: $" + Math.floor(Math.random() * 100);
+				}
+	
+				// Create a new trail element with glitch aesthetic
+				const trailEl = document.createElement("div");
+				trailEl.className = "trail";
+				trailEl.innerHTML = data.split("").map(char => `<span class="glitch">${char}</span>`).join("");
+				trailEl.style.position = "absolute";
+				trailEl.style.left = screenX + "px";
+				trailEl.style.top = screenY + "px";
+				trailEl.style.opacity = 1; // Set initial opacity to 1
+				document.body.appendChild(trailEl);
+	
+				// Add the trail element to the trail array
+				this.trail.push({ element: trailEl, timestamp: Date.now() });
+	
+				// Remove old trail elements if the trail length is exceeded or if 8 seconds have passed
+				while (this.trail.length > this.trailLength || (this.trail.length > 0 && Date.now() - this.trail[0].timestamp > 8000)) {
+					const { element } = this.trail.shift();
+					document.body.removeChild(element);
+				}
+			}
+	
+			// Update the opacity of the trail elements gradually
+			this.trail.forEach((trailEl, index) => {
+				const opacity = 1 - (index / this.trailLength);
+				trailEl.element.style.opacity = opacity;
+			});
+	
+			// Update the last screen position
+			this.lastScreenPosition = { x: screenX, y: screenY };
+	
+			this.lastTrailUpdate = Date.now();
+		}
+	};
+
 	Fly.prototype.moveTo = function(x, y) {
 		var vec3 = Utils.unproject2DCoords(x, y, this.camera, this.el.position.z);
 		TweenLite.to(this.el.position, 0.3, {x: vec3.x, y: vec3.y, ease: Linear.easeNone});
@@ -230,10 +288,7 @@ var wW,
 		}
 	}
 	
-	function moveFlyAndWatcherToFace(detectedX, detectedY, detectedWidth, detectedHeight) {
-		// Assuming the face detection gives us coordinates in the video element space, 
-		// we need to convert these to window-relative coordinates if necessary.
-		// This code assumes the video element is full-window. Adjust if not.
+	function moveFlyAndWatcherToFace(detectedX, detectedY) {
 		const rect = video.getBoundingClientRect(); // 'video' is your video element
 		const scaleX = window.innerWidth / rect.width;
 		const scaleY = window.innerHeight / rect.height;
@@ -245,6 +300,8 @@ var wW,
 		// Use the mouse movement approach with the converted coordinates for the fly
 		var vec3Fly = Utils.unproject2DCoords(screenX, screenY, camera, fly.el.position.z);
 		TweenLite.to(fly.el.position, 0.3, { x: vec3Fly.x, y: vec3Fly.y, ease: Linear.easeNone });
+
+		fly.updateTrail();
 	
 		// Rotate the watcher to face the detected face
 		var vec3Watcher = Utils.unproject2DCoords(screenX, screenY, camera, 10).sub(new THREE.Vector3(watcher.el.position.x - 2, watcher.el.position.y + 2, 0));
